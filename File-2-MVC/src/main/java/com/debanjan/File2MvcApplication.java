@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class File2MvcApplication {
 
 	public static void main(String[] args) {
-
+        System.out.println("Getting started....");
         SpringApplication.run(File2MvcApplication.class, args);
 	}
 }
