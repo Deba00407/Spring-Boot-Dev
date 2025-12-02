@@ -1,10 +1,10 @@
-package com.debanjan;
+package com.debanjan.Spring_JPA;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class File2MvcApplicationTests {
+class SpringJpaApplicationTests {
 
 	@Test
 	void contextLoads() {
