@@ -2,12 +2,17 @@ package com.debanjan.Spring_JPA;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import java.util.TimeZone;
 
 @SpringBootApplication
 public class SpringJpaApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SpringJpaApplication.class, args);
+
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
+        System.out.println("Loading application");
+        SpringApplication.run(SpringJpaApplication.class, args);
 	}
 
 }
