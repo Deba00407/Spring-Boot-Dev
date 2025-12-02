@@ -14,6 +14,10 @@ public class StudentEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+//    @Column(unique = true, nullable = false, updatable = false)
+//    @GeneratedValue(generator = "uuid")
+//    public String public_id;
+
     private String name;
     private int age;
     private String gender;
