@@ -3,6 +3,7 @@ package com.debanjan.Spring_JPA.services;
 import com.debanjan.Spring_JPA.dto.StudentDTO;
 import com.debanjan.Spring_JPA.entities.StudentEntity;
 import com.debanjan.Spring_JPA.repos.StudentRepo;
+import com.debanjan.Spring_JPA.utils.Gender;
 import com.debanjan.Spring_JPA.utils.Logger;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class StudentService {
             StudentEntity studentEntity = modelMapper.map(newStudent, StudentEntity.class);
             studentRepo.save(studentEntity);
         }catch (Exception e){
-            return e.getMessage();
+            return String.format("Error adding student: %s", e.getMessage());
         }finally {
             System.out.println("New student added:");
             Logger.logEntity(newStudent);
@@ -86,8 +87,13 @@ public class StudentService {
                     break;
 
                 case "gender":
-                    student.setGender(value);
+                    try {
+                        student.setGender(Gender.valueOf(value.toUpperCase()));
+                    } catch (IllegalArgumentException ex) {
+                        return "Invalid gender value. Allowed: MALE, FEMALE, OTHER";
+                    }
                     break;
+
 
                 default:
                     return "Invalid field: " + field;

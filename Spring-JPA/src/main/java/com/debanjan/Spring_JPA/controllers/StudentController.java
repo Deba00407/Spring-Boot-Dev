@@ -3,6 +3,7 @@ package com.debanjan.Spring_JPA.controllers;
 import com.debanjan.Spring_JPA.dto.StudentDTO;
 import com.debanjan.Spring_JPA.entities.StudentEntity;
 import com.debanjan.Spring_JPA.services.StudentService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class StudentController {
     }
 
     @PostMapping("/new-student")
-    public String addStudent(@RequestBody StudentDTO newStudent){
+    public String addStudent(@RequestBody @Valid StudentDTO newStudent){
         return studentService.addStudent(newStudent);
     }
 
