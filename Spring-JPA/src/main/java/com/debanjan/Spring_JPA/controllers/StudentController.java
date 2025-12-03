@@ -1,7 +1,6 @@
 package com.debanjan.Spring_JPA.controllers;
 
 import com.debanjan.Spring_JPA.dto.StudentDTO;
-import com.debanjan.Spring_JPA.entities.StudentEntity;
 import com.debanjan.Spring_JPA.services.StudentService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
