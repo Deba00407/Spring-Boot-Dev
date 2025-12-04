@@ -9,7 +9,7 @@ public class SpringJpaApplication {
 
 	public static void main(String[] args) {
 
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));
 
         System.out.println("Loading application");
         SpringApplication.run(SpringJpaApplication.class, args);
