@@ -1,7 +1,8 @@
 package com.debanjan.Spring_JPA.utils;
 
+import com.debanjan.Spring_JPA.exceptions.BadRequestException;
+import com.debanjan.Spring_JPA.exceptions.StudentNotFoundException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,9 +18,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ChangeSetPersister.NotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleNotFound(ChangeSetPersister.NotFoundException ex) {
-        log.info("Resource not found: {}", ex.getMessage());
+    // 404 – student not found
+    @ExceptionHandler(StudentNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleStudentNotFound(StudentNotFoundException ex) {
+        log.info("Student not found: {}", ex.getMessage());
 
         ApiErrorResponse body = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
@@ -32,6 +34,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
+    // 400 – bad request / invalid field / invalid format
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiErrorResponse> handleBadRequest(BadRequestException ex) {
+        log.warn("Bad request: {}", ex.getMessage());
+
+        ApiErrorResponse body = ApiErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(ex.getMessage())
+                .traceId(UUID.randomUUID().toString())
+                .build();
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    // 400 – bean validation errors (@Valid)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
@@ -50,10 +69,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(body);
     }
 
-    // Fallback for anything unexpected
+    // 500 – everything else (real bugs)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleAll(Exception ex) {
-        log.error("Unhandled exception", ex);
+        log.error("Unhandled exception type: {}", ex.getClass().getName(), ex);
 
         ApiErrorResponse body = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
@@ -64,6 +83,6 @@ public class GlobalExceptionHandler {
                 .traceId(UUID.randomUUID().toString())
                 .build();
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

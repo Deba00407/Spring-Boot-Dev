@@ -2,6 +2,8 @@ package com.debanjan.Spring_JPA.services;
 
 import com.debanjan.Spring_JPA.dto.StudentDTO;
 import com.debanjan.Spring_JPA.entities.StudentEntity;
+import com.debanjan.Spring_JPA.exceptions.BadRequestException;
+import com.debanjan.Spring_JPA.exceptions.StudentNotFoundException;
 import com.debanjan.Spring_JPA.repos.StudentRepo;
 import com.debanjan.Spring_JPA.utils.Gender;
 import com.debanjan.Spring_JPA.utils.Logger;
@@ -26,6 +28,10 @@ public class StudentService {
     public List<StudentDTO> getAllStudents() {
         List<StudentEntity> students = studentRepo.findAll();
 
+        if(students.isEmpty()){
+            return List.of(); // return empty list
+        }
+
         return students.stream()
                 .map(student -> modelMapper.map(student, StudentDTO.class))
                 .toList();
@@ -33,7 +39,7 @@ public class StudentService {
 
     public StudentDTO getStudentById(Long id){
         StudentEntity studentEntity = studentRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+                .orElseThrow(() -> new StudentNotFoundException("Student not found with id: " + id));
         return modelMapper.map(studentEntity, StudentDTO.class);
     }
 
@@ -49,7 +55,7 @@ public class StudentService {
 
     public String deleteStudent(Long id){
         if (!studentRepo.existsById(id)) {
-            throw new RuntimeException("Student not found with id: " + id);
+            throw new StudentNotFoundException("Student not found with id: " + id);
         }
         studentRepo.deleteById(id);
         return "Student deleted successfully!";
@@ -59,7 +65,7 @@ public class StudentService {
         field = field.toLowerCase();
 
         StudentEntity student = studentRepo.findById(id).orElseThrow(
-                () -> new RuntimeException("Student not found with id: " + id)
+                () -> new StudentNotFoundException("Student not found with id: " + id)
         );
 
         switch (field) {
@@ -71,7 +77,7 @@ public class StudentService {
                 try {
                     student.setAge(Integer.parseInt(value));
                 } catch (NumberFormatException e) {
-                    throw new RuntimeException("Invalid age format: " + value);
+                    throw new BadRequestException("Invalid age format: " + value);
                 }
                 break;
 
