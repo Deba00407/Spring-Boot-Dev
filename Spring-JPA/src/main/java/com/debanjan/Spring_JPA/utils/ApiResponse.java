@@ -3,8 +3,6 @@ package com.debanjan.Spring_JPA.utils;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 

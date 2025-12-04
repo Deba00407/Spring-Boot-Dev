@@ -2,6 +2,7 @@ package com.debanjan.Spring_JPA.utils;
 
 import com.debanjan.Spring_JPA.exceptions.BadRequestException;
 import com.debanjan.Spring_JPA.exceptions.StudentNotFoundException;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class GlobalExceptionHandler {
 
     // 404 – student not found
     @ExceptionHandler(StudentNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleStudentNotFound(StudentNotFoundException ex) {
+    public ResponseEntity<ApiResponse> handleStudentNotFound(StudentNotFoundException ex) {
         log.info("Student not found: {}", ex.getMessage());
 
         ApiErrorResponse body = ApiErrorResponse.builder()
@@ -35,15 +36,23 @@ public class GlobalExceptionHandler {
                 .traceId(UUID.randomUUID().toString())
                 .build();
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+        ApiResponse response = ApiResponse.builder()
+                .error(body)
+                .data(null)
+                .timestamp(body.getTimestamp())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+
     // 400 – bad request / invalid field / invalid format
+    // 400 – bad request (custom)
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiErrorResponse> handleBadRequest(BadRequestException ex) {
+    public ResponseEntity<ApiResponse<?>> handleBadRequest(BadRequestException ex) {
         log.warn("Bad request: {}", ex.getMessage());
 
-        ApiErrorResponse body = ApiErrorResponse.builder()
+        ApiErrorResponse errorBody = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
@@ -52,57 +61,75 @@ public class GlobalExceptionHandler {
                 .traceId(UUID.randomUUID().toString())
                 .build();
 
-        return ResponseEntity.badRequest().body(body);
+        ApiResponse<?> response = ApiResponse.builder()
+                .data(null)
+                .error(errorBody)
+                .timestamp(errorBody.getTimestamp())
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
     }
 
-    // 400 – bean validation errors (@Valid)
+    // 400 – bean validation errors (@Valid on @RequestBody)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<?>> handleValidation(MethodArgumentNotValidException ex) {
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.toList());
 
-        ApiErrorResponse body = ApiErrorResponse.builder()
+        ApiErrorResponse errorBody = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
-                .message("Validation failed: " + ex.getMessage())
+                .message("Validation failed")
                 .debugMessage("Validation errors: " + errors)
                 .errors(errors)
                 .traceId(UUID.randomUUID().toString())
                 .build();
 
-        return ResponseEntity.badRequest().body(body);
+        ApiResponse<?> response = ApiResponse.builder()
+                .data(null)
+                .error(errorBody)
+                .timestamp(errorBody.getTimestamp())
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
     }
 
+    // 400 – constraint violations (e.g. @Min, @Max on entity or params)
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
-        var errors = ex.getConstraintViolations().stream()
+    public ResponseEntity<ApiResponse<?>> handleConstraintViolation(ConstraintViolationException ex) {
+        List<String> errors = ex.getConstraintViolations().stream()
                 .map(cv -> cv.getPropertyPath() + ": " + cv.getMessage())
                 .toList();
 
-        ApiErrorResponse body = ApiErrorResponse.builder()
+        ApiErrorResponse errorBody = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
-                .debugMessage(ex.getClass().getSimpleName() + " - " + "Age must be between 5 and 20")
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
                 .message("Validation failed")
+                .debugMessage(ex.getClass().getSimpleName() + " - Age must be between 5 and 20")
                 .errors(errors)
                 .traceId(UUID.randomUUID().toString())
                 .build();
 
-        return ResponseEntity.badRequest().body(body);
+        ApiResponse<?> response = ApiResponse.builder()
+                .data(null)
+                .error(errorBody)
+                .timestamp(errorBody.getTimestamp())
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(TransactionSystemException.class)
-    public ResponseEntity<ApiErrorResponse> handleTransaction(TransactionSystemException ex) {
+    public ResponseEntity<ApiResponse<?>> handleTransaction(TransactionSystemException ex) {
         Throwable root = ex.getRootCause();
         if (root instanceof ConstraintViolationException cve) {
-            return handleConstraintViolation(cve);   // reuse above logic
+            return handleConstraintViolation(cve);   // reuse above logic (already wraps in ApiResponse)
         }
 
-        // otherwise, let it be treated as 500
-        ApiErrorResponse body = ApiErrorResponse.builder()
+        ApiErrorResponse errorBody = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
@@ -111,15 +138,21 @@ public class GlobalExceptionHandler {
                 .traceId(UUID.randomUUID().toString())
                 .build();
 
-        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+        ApiResponse<?> response = ApiResponse.builder()
+                .data(null)
+                .error(errorBody)
+                .timestamp(errorBody.getTimestamp())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     // 500 – everything else (real bugs)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleAll(Exception ex) {
+    public ResponseEntity<ApiResponse<?>> handleAll(Exception ex) {
         log.error("Unhandled exception type: {}", ex.getClass().getName(), ex);
 
-        ApiErrorResponse body = ApiErrorResponse.builder()
+        ApiErrorResponse errorBody = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
@@ -128,6 +161,12 @@ public class GlobalExceptionHandler {
                 .traceId(UUID.randomUUID().toString())
                 .build();
 
-        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+        ApiResponse<?> response = ApiResponse.builder()
+                .data(null)
+                .error(errorBody)
+                .timestamp(errorBody.getTimestamp())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }
