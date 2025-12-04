@@ -41,8 +41,8 @@ public class StudentEntity {
     private String name;
 
     @Positive(message = "Age cannot be negative or zero")
-    @Min(value = 5, message = "Age must be at least 21 year old")
-    @Max(value = 20, message = "Age cannot be more than 65 years old")
+    @Min(value = 5, message = "Age must be at least 5 year old")
+    @Max(value = 20, message = "Age cannot be more than 20 years old")
     private int age;
 
     @Enumerated(EnumType.STRING)

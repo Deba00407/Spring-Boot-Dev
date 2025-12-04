@@ -9,6 +9,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.transaction.TransactionSystemException;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +28,7 @@ public class GlobalExceptionHandler {
 
         ApiErrorResponse body = ApiErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
+                .debugMessage(ex.getClass().getSimpleName() + " - " + "Student with the given ID not found")
                 .status(HttpStatus.NOT_FOUND.value())
                 .error(HttpStatus.NOT_FOUND.getReasonPhrase())
                 .message(ex.getMessage())
@@ -43,6 +47,7 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .debugMessage(ex.getClass().getSimpleName())
                 .message(ex.getMessage())
                 .traceId(UUID.randomUUID().toString())
                 .build();
@@ -61,12 +66,52 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message("Validation failed: " + ex.getMessage())
+                .debugMessage("Validation errors: " + errors)
+                .errors(errors)
+                .traceId(UUID.randomUUID().toString())
+                .build();
+
+        return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
+        var errors = ex.getConstraintViolations().stream()
+                .map(cv -> cv.getPropertyPath() + ": " + cv.getMessage())
+                .toList();
+
+        ApiErrorResponse body = ApiErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .debugMessage(ex.getClass().getSimpleName() + " - " + "Age must be between 5 and 20")
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
                 .message("Validation failed")
                 .errors(errors)
                 .traceId(UUID.randomUUID().toString())
                 .build();
 
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<ApiErrorResponse> handleTransaction(TransactionSystemException ex) {
+        Throwable root = ex.getRootCause();
+        if (root instanceof ConstraintViolationException cve) {
+            return handleConstraintViolation(cve);   // reuse above logic
+        }
+
+        // otherwise, let it be treated as 500
+        ApiErrorResponse body = ApiErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
+                .message("An unexpected error occurred")
+                .debugMessage(ex.getMessage())
+                .traceId(UUID.randomUUID().toString())
+                .build();
+
+        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // 500 – everything else (real bugs)

@@ -62,11 +62,12 @@ public class StudentService {
     }
 
     public String updateStudent(Long id, String field, String value) {
-        field = field.toLowerCase();
 
-        StudentEntity student = studentRepo.findById(id).orElseThrow(
-                () -> new StudentNotFoundException("Student not found with id: " + id)
-        );
+        StudentEntity student = studentRepo.findById(id)
+                        .orElseThrow(() -> new StudentNotFoundException("Student not found with id: " + id));
+
+        // convert to lowercase
+        field = field.toLowerCase();
 
         switch (field) {
             case "name":
@@ -76,7 +77,7 @@ public class StudentService {
             case "age":
                 try {
                     student.setAge(Integer.parseInt(value));
-                } catch (NumberFormatException e) {
+                } catch (Exception e) {
                     throw new BadRequestException("Invalid age format: " + value);
                 }
                 break;
@@ -89,13 +90,17 @@ public class StudentService {
                 try {
                     student.setGender(Gender.valueOf(value.toUpperCase()));
                 } catch (IllegalArgumentException ex) {
-                    throw new RuntimeException("Invalid gender value. Allowed: MALE, FEMALE, OTHER");
+                    throw new BadRequestException("Invalid gender value. Allowed: MALE, FEMALE, OTHER");
                 }
+                break;
+
+            case "onroll":
+                student.setOnRoll(Boolean.parseBoolean(value));
                 break;
 
 
             default:
-                throw new RuntimeException("Invalid field: " + field);
+                throw new BadRequestException("Invalid field: " + field);
         }
 
         // save the updated student
