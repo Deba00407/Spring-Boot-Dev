@@ -1,5 +1,6 @@
 package com.debanjan.Spring_JPA.entities;
 
+import com.debanjan.Spring_JPA.custom_annotations.OddNumber;
 import com.debanjan.Spring_JPA.utils.Gender;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
