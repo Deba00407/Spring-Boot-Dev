@@ -48,7 +48,7 @@ public class GlobalExceptionHandler {
     // 400 – bad request / invalid field / invalid format
     // 400 – bad request (custom)
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiResponse<?>> handleBadRequest(BadRequestException ex) {
+    public ResponseEntity<ApiResponse> handleBadRequest(BadRequestException ex) {
         log.warn("Bad request: {}", ex.getMessage());
 
         ApiErrorResponse errorBody = ApiErrorResponse.builder()
@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
 
     // 400 – constraint violations (e.g. @Min, @Max on entity or params)
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResponse<?>> handleConstraintViolation(ConstraintViolationException ex) {
+    public ResponseEntity<ApiResponse> handleConstraintViolation(ConstraintViolationException ex) {
         List<String> errors = ex.getConstraintViolations().stream()
                 .map(cv -> cv.getPropertyPath() + ": " + cv.getMessage())
                 .toList();
@@ -122,7 +122,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TransactionSystemException.class)
-    public ResponseEntity<ApiResponse<?>> handleTransaction(TransactionSystemException ex) {
+    public ResponseEntity<ApiResponse> handleTransaction(TransactionSystemException ex) {
         Throwable root = ex.getRootCause();
         if (root instanceof ConstraintViolationException cve) {
             return handleConstraintViolation(cve);   // reuse above logic (already wraps in ApiResponse)
@@ -148,7 +148,7 @@ public class GlobalExceptionHandler {
 
     // 500 – everything else (real bugs)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleAll(Exception ex) {
+    public ResponseEntity<ApiResponse> handleAll(Exception ex) {
         log.error("Unhandled exception type: {}", ex.getClass().getName(), ex);
 
         ApiErrorResponse errorBody = ApiErrorResponse.builder()
