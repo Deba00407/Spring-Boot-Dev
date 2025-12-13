@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 interface ProductServicesInterface {
-    ProductDTO getProductById(String id);
+    ProductDTO getProductById(UUID id);
     List<ProductDTO> getAllProducts();
     void saveProduct(ProductDTO product);
     void deleteProduct(UUID id);
@@ -75,8 +75,8 @@ public class ProductServices implements ProductServicesInterface{
     }
 
     @Override
-    public ProductDTO getProductById(String id) {
-        Optional<ProductEntity> re = productRepo.findById(UUID.fromString(id));
+    public ProductDTO getProductById(UUID id) {
+        Optional<ProductEntity> re = productRepo.findById(id);
         if(re.isEmpty()){
             throw new ResourceNotFoundException("Product not found");
         }

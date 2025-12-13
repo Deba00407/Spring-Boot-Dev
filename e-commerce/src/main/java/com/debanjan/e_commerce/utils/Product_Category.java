@@ -1,0 +1,20 @@
+package com.debanjan.e_commerce.utils;
+
+public enum Product_Category {
+    ELECTRONICS,
+    FASHION,
+    HOME_AND_KITCHEN,
+    BEAUTY_AND_PERSONAL_CARE,
+    GROCERY,
+    BOOKS,
+    SPORTS_AND_FITNESS,
+    TOYS_AND_GAMES,
+    HEALTH_AND_WELLNESS,
+    AUTOMOTIVE,
+    FURNITURE,
+    STATIONERY,
+    FOOTWEAR,
+    ACCESSORIES,
+    BABY_PRODUCTS,
+    PET_SUPPLIES
+}

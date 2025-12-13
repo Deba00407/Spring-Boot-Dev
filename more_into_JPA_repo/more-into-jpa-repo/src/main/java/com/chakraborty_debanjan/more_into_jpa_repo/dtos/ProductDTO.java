@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -12,6 +13,8 @@ public class ProductDTO {
     private String product_name;
 
     private String short_description;
+
+    private BigDecimal price;
 
     @ToString.Exclude
     private String sku;

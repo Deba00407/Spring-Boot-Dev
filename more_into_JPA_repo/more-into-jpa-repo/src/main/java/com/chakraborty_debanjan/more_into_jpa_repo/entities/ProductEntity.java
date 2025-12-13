@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.validator.constraints.Length;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -73,7 +74,7 @@ public class ProductEntity {
 
     @Column(nullable = false, name = "product_price", updatable = true, precision = 10, scale = 3)
     @Builder.Default
-    private float price = 0; // default value
+    private BigDecimal price = BigDecimal.ZERO; // default value
 
     @Column(nullable = false, name = "product_quantity", updatable = true)
     @JsonIgnore // exclude from json output
