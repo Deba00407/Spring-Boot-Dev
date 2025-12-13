@@ -30,7 +30,7 @@ public class ProductEntity extends AuditableBase {
         }
     }
 
-    @Column(name = "product_name", nullable = false, unique = true)
+    @Column(name = "product_name", nullable = false)
     private String productName;
 
     @Column(name = "product_description", nullable = false)
