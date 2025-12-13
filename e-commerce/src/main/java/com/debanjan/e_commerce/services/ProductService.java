@@ -1,8 +1,10 @@
 package com.debanjan.e_commerce.services;
 
-import com.debanjan.e_commerce.DTO.ProductDTO;
+import com.debanjan.e_commerce.DTO.CreateProductDTO;
+import com.debanjan.e_commerce.DTO.ProductResponseDTO;
 import com.debanjan.e_commerce.DTO.ProductUpdateDTO;
 import com.debanjan.e_commerce.custom_exceptions.BadRequestException;
+import com.debanjan.e_commerce.custom_exceptions.DuplicateResourceException;
 import com.debanjan.e_commerce.custom_exceptions.OperationException;
 import com.debanjan.e_commerce.custom_exceptions.ResourceNotFoundException;
 import com.debanjan.e_commerce.entities.ProductEntity;
@@ -11,6 +13,7 @@ import com.debanjan.e_commerce.utils.ValidateURL;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -18,17 +21,18 @@ import java.util.List;
 import java.util.Optional;
 
 interface ProductServiceInterface {
-    ProductDTO saveProduct(ProductDTO productDTO);
-    List<ProductDTO> getAllProducts();
-    ProductDTO getProductById(Long id);
-    ProductDTO getProductByProductCode(String productCode);
+    ProductResponseDTO saveProduct(CreateProductDTO productDTO);
+    List<ProductResponseDTO> getAllProducts();
+    ProductResponseDTO getProductById(Long id);
+    ProductResponseDTO getProductByProductCode(String productCode);
     void deleteProductById(Long id);
     void deleteProductByProductCode(String productCode);
-    ProductDTO updateProductByProductCode(String productCode, ProductUpdateDTO productDTO);
-    ProductDTO updateProductById(Long id, ProductUpdateDTO productDTO);
+    CreateProductDTO updateProductByProductCode(String productCode, ProductUpdateDTO productDTO);
+    CreateProductDTO updateProductById(Long id, ProductUpdateDTO productDTO);
 }
 
 @Service
+@Validated
 public class ProductService implements ProductServiceInterface{
     private final ProductEntityRepository productEntityRepository;
 
@@ -39,53 +43,69 @@ public class ProductService implements ProductServiceInterface{
         this.productEntityRepository = productEntityRepository;
     }
 
+    private ProductEntity convertToProductEntity(CreateProductDTO productDTO){
+        ProductEntity pe = new ProductEntity();
+        pe.setProductPrice(productDTO.getProductPrice());
+        pe.setProductCategory(productDTO.getProductCategory());
+        pe.setProductName(productDTO.getProductName());
+        pe.setProductDescription(productDTO.getProductDescription());
+        pe.setProductCoverImage(productDTO.getProductCoverImage());
+        pe.setProductStock(productDTO.getProductStock());
+        return pe;
+    }
+
     @Override
     @Transactional
-    public ProductDTO saveProduct(@Validated ProductDTO productDTO){
-
+    public ProductResponseDTO saveProduct(CreateProductDTO productDTO){
         // validate the cover image url
         if(!ValidateURL.isValid(productDTO.getProductCoverImage())){
             throw new BadRequestException("Invalid cover image URL: " + productDTO.getProductCoverImage());
         }
 
-        // convert to a product entity and save
-        productEntityRepository.findByProductCode(productDTO.getProductCode()).ifPresentOrElse(
-                existing -> {
-                    throw new OperationException("Product already exists with product code: " + productDTO.getProductCode());
-                },
-                () -> productEntityRepository.save(modelMapper.map(productDTO, ProductEntity.class))
-        );
+        ProductEntity pe = convertToProductEntity(productDTO);
 
-        return productDTO;
+        if(productEntityRepository.existsByProductCode(pe.getProductCode())){
+            throw new DuplicateResourceException("Product already exists with product code: " + pe.getProductCode());
+        }
+
+        ProductEntity saved = productEntityRepository.save(pe);
+
+        return modelMapper.map(saved, ProductResponseDTO.class);
     }
 
     @Override
     @Transactional
-    public List<ProductDTO> getAllProducts(){
+    public List<ProductResponseDTO> getAllProducts(){
         List<ProductEntity> products = productEntityRepository.findAll();
         if(products.isEmpty()) return List.of();
 
         return products
                 .stream()
-                .map(productEntity -> modelMapper.map(productEntity, ProductDTO.class))
+                .map(productEntity -> modelMapper.map(productEntity, ProductResponseDTO.class))
                 .toList();
     }
 
     @Override
     @Transactional
-    public ProductDTO getProductById(Long id) {
+    public ProductResponseDTO getProductById(Long id) {
         Optional<ProductEntity> productEntity = productEntityRepository.findById(id);
         if(productEntity.isEmpty()){
             throw new ResourceNotFoundException("Product not found for id: " + id);
         }
 
-        return modelMapper.map(productEntity.get(), ProductDTO.class);
+        return modelMapper.map(productEntity.get(), ProductResponseDTO.class);
     }
 
     @Override
     @Transactional
-    public ProductDTO getProductByProductCode(String productCode) {
-        return null;
+    public ProductResponseDTO getProductByProductCode(String productCode) {
+
+        Optional<ProductEntity> productEntity = productEntityRepository.findByProductCode(productCode);
+        if(productEntity.isEmpty()){
+            throw new ResourceNotFoundException("Product not found for product code: " + productCode);
+        }
+
+        return modelMapper.map(productEntity.get(), ProductResponseDTO.class);
     }
 
     @Override
@@ -121,7 +141,7 @@ public class ProductService implements ProductServiceInterface{
 
     @Override
     @Transactional
-    public ProductDTO updateProductByProductCode(String productCode, @Validated ProductUpdateDTO dto) {
+    public CreateProductDTO updateProductByProductCode(String productCode, ProductUpdateDTO dto) {
         ProductEntity product = productEntityRepository.findByProductCode(productCode)
                             .orElseThrow(() -> new ResourceNotFoundException("Product not found for productCode: " + productCode));
 
@@ -129,12 +149,12 @@ public class ProductService implements ProductServiceInterface{
 
         ProductEntity updated = productEntityRepository.save(product);
 
-        return modelMapper.map(updated, ProductDTO.class);
+        return modelMapper.map(updated, CreateProductDTO.class);
     }
 
     @Override
     @Transactional
-    public ProductDTO updateProductById(Long id, ProductUpdateDTO dto) {
+    public CreateProductDTO updateProductById(Long id, ProductUpdateDTO dto) {
         ProductEntity product = productEntityRepository.findById(id)
                             .orElseThrow(() -> new ResourceNotFoundException("Product not found for ID: " + id));
 
@@ -142,6 +162,6 @@ public class ProductService implements ProductServiceInterface{
 
         ProductEntity updated = productEntityRepository.save(product);
 
-        return modelMapper.map(updated, ProductDTO.class);
+        return modelMapper.map(updated, CreateProductDTO.class);
     }
 }
