@@ -1,6 +1,6 @@
 package com.debanjan.e_commerce.DTO;
 
-import com.debanjan.e_commerce.utils.Product_Category;
+import com.debanjan.e_commerce.utils.custom_enums.Product_Category;
 import lombok.*;
 
 import java.math.BigDecimal;

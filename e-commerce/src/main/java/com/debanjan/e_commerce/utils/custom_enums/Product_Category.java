@@ -1,4 +1,4 @@
-package com.debanjan.e_commerce.utils;
+package com.debanjan.e_commerce.utils.custom_enums;
 
 public enum Product_Category {
     ELECTRONICS,
