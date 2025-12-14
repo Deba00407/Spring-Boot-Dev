@@ -6,7 +6,7 @@ import com.debanjan.e_commerce.DTO.ProductUpdateDTO;
 import com.debanjan.e_commerce.custom_exceptions.BadRequestException;
 import com.debanjan.e_commerce.custom_exceptions.ResourceNotFoundException;
 import com.debanjan.e_commerce.services.ProductService;
-import com.debanjan.e_commerce.utils.Product_Category;
+import com.debanjan.e_commerce.utils.custom_enums.Product_Category;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 

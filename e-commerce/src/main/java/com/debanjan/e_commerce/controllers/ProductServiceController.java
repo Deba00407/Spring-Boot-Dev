@@ -5,14 +5,15 @@ import com.debanjan.e_commerce.DTO.ProductResponseDTO;
 import com.debanjan.e_commerce.DTO.ProductUpdateDTO;
 import com.debanjan.e_commerce.services.ProductService;
 import com.debanjan.e_commerce.utils.responses.ApiSuccessResponse;
-import jakarta.websocket.server.PathParam;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -49,7 +50,7 @@ public class ProductServiceController {
     }
 
     @PostMapping("/add/new-product")
-    public ResponseEntity<ApiSuccessResponse<Object>> addANewProduct(@RequestBody CreateProductDTO dto){
+    public ResponseEntity<ApiSuccessResponse<Object>> addANewProduct(@RequestBody @Valid CreateProductDTO dto){
         ProductResponseDTO product = productService.saveProduct(dto);
         return ResponseEntity.ok(
             responseBuilder("Product added successfully", product)
@@ -57,7 +58,7 @@ public class ProductServiceController {
     }
 
     @GetMapping("")
-    public ResponseEntity<ApiSuccessResponse<Object>> getProductById(@RequestParam("id") Long id){
+    public ResponseEntity<ApiSuccessResponse<Object>> getProductById(@RequestParam("id") @NotNull Long id){
         ProductResponseDTO product = productService.getProductById(id);
         return ResponseEntity.ok(
             responseBuilder("Product fetched successfully", product)
@@ -65,14 +66,14 @@ public class ProductServiceController {
     }
 
     @GetMapping("/code")
-    public ResponseEntity<ApiSuccessResponse<Object>> getProductByProductCode(@RequestParam String code){
+    public ResponseEntity<ApiSuccessResponse<Object>> getProductByProductCode(@RequestParam @NotBlank String code){
         ProductResponseDTO product = productService.getProductByProductCode(code);
         ApiSuccessResponse<Object> response = responseBuilder("Product fetched successfully", product);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiSuccessResponse<Object>> deleteProductById(@PathVariable Long id) {
+    public ResponseEntity<ApiSuccessResponse<Object>> deleteProductById(@PathVariable @NotNull Long id) {
         productService.deleteProductById(id);
         return ResponseEntity.ok(
                 responseBuilder(String.format("Product with id: %s deleted successfully", id), null)
@@ -80,48 +81,29 @@ public class ProductServiceController {
     }
 
     @DeleteMapping("/delete/code/{productCode}")
-    public ResponseEntity<ApiSuccessResponse<Object>> deleteProductByCode(@PathVariable String productCode) {
+    public ResponseEntity<ApiSuccessResponse<Object>> deleteProductByCode(@PathVariable @NotBlank String productCode) {
         productService.deleteProductByProductCode(productCode);
         return ResponseEntity.ok(
                 responseBuilder(String.format("Product with product code: %s deleted successfully", productCode), null)
         );
     }
 
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ApiSuccessResponse<Object>> updateProductById(@PathVariable @NotNull Long id, @RequestBody @Valid ProductUpdateDTO dto){
+        // find the product by id
+        ProductResponseDTO product = productService.getProductById(id);
+        updateProduct(product, dto);
+        productService.updateProductById(id, dto);
+        ApiSuccessResponse<Object> response = responseBuilder("Product updated successfully", product);
+        return ResponseEntity.ok(response);
+    }
 
-    // COMBINED DELETION LOGIC
-
-//    @DeleteMapping("/delete")
-//    public ResponseEntity<ApiSuccessResponse<Object>> deleteProduct(@PathParam("id") Long id, @PathParam("code") String code){
-//        String msg = "";
-//        if(id != null){
-//            productService.deleteProductById(id);
-//            msg = String.format("Product with id: %d deleted successfully", id);
-//        }else if(code != null){
-//            productService.deleteProductByProductCode(code);
-//            msg = String.format("Product with code: %s deleted successfully", code);
-//        }
-//
-//        ApiSuccessResponse<Object> response = responseBuilder(msg, null);
-//        return ResponseEntity.ok(response);
-//    }
-
-
-//    @PutMapping("/update/{id}")
-//    public ResponseEntity<ApiSuccessResponse<Object>> updateProductById(@PathVariable Long id, @RequestBody ProductUpdateDTO dto){
-//        // find the product by id
-//        ProductResponseDTO product = productService.getProductById(id);
-//        updateProduct(product, dto);
-//        productService.updateProductById(id, dto);
-//        ApiSuccessResponse<Object> response = responseBuilder("Product updated successfully", product);
-//        return ResponseEntity.ok(response);
-//    }
-//
-//    @PutMapping("/update/code/{code}")
-//    public ResponseEntity<ApiSuccessResponse<Object>> updateProductByProductCode(@PathVariable String code, @RequestBody ProductUpdateDTO dto){
-//        ProductResponseDTO product = productService.getProductByProductCode(code);
-//        updateProduct(product, dto);
-//        productService.updateProductByProductCode(code, dto);
-//        ApiSuccessResponse<Object> response = responseBuilder("Product updated successfully", product);
-//        return ResponseEntity.ok(response);
-//    }
+    @PutMapping("/update/code/{code}")
+    public ResponseEntity<ApiSuccessResponse<Object>> updateProductByProductCode(@PathVariable String code, @RequestBody @Valid ProductUpdateDTO dto){
+        ProductResponseDTO product = productService.getProductByProductCode(code);
+        updateProduct(product, dto);
+        productService.updateProductByProductCode(code, dto);
+        ApiSuccessResponse<Object> response = responseBuilder("Product updated successfully", product);
+        return ResponseEntity.ok(response);
+    }
 }
