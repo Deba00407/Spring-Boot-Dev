@@ -18,4 +18,5 @@ public class ProductResponseDTO {
     private String productCoverImage;
     private BigDecimal productPrice;
     private Product_Category productCategory;
+    private Integer productStock;
 }

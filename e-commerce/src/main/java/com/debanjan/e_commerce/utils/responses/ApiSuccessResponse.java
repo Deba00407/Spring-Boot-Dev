@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 public class ApiSuccessResponse<T>{
     private T data;
     private String message;
-    private Boolean success;
     private Object meta; // for meta data in pagination
     private LocalDateTime timestamp;
 }
